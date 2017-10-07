@@ -93,7 +93,7 @@ class User(telepot.helper.ChatHandler):
         randomeat = int(random.randint(0,numoeats))*5 #select random eatery "Name" line
         randeatery = "\n".join(listdetails[randomeat:randomeat+5])
         self.sender.sendMessage(randeatery) 
-        self.sender.sendMessage('Eatery: #%d\nIs this eatery OK?\n/ok or /notok ?')
+        self.sender.sendMessage('Is this eatery OK?\n/ok or /notok ?')
     
 #------------possible inputs form user----------------#
     def on_chat_message(self, msg):
@@ -116,7 +116,7 @@ class User(telepot.helper.ChatHandler):
             #generate a random eatery
             elif userin == '/randomeatery':
                 num=2 #indicate to function to generate only 1
-                self.getlocation() #get location then go to ielif content_type == 'location' below
+                self.getlocation() #get location then go to elif content_type == 'location' below
 
             # check if the user is agreeable with generated eatery
             elif userin == '/ok' and num == 2:
