@@ -1,1 +1,1 @@
-web: python RandomEats.py 
+web: python RandomEats.py -p $PORT
