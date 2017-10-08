@@ -1,1 +1,1 @@
-web: python -b 0.0.0.0:$PORT RandomEats.py
+worker: python RandomEats.py -p $PORT
