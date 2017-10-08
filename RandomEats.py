@@ -11,7 +11,7 @@ from telepot.delegate import per_chat_id, create_open, pave_event_space
 from telepot.namedtuple import ReplyKeyboardMarkup, KeyboardButton
 
 
-For Google Dirve API linking to Google Sheetes
+#For Google Dirve API linking to Google Sheetes
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
