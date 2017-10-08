@@ -134,7 +134,7 @@ class User(telepot.helper.ChatHandler):
             elif userin == '/feedback':
                 self.sender.sendMessage('To leave a comment, type /feedback {comment} \n\nTo partipate in our user testing, please click on this link: https://docs.google.com/forms/d/e/1FAIpQLSc1JWS2EZI7Gv0yKgnOjFO9TlyOcW4jeCouQhIMH3PtzVFk0w/viewform')
 
-	    elif ("/feedback") in userin:
+            elif ("/feedback") in userin:
                 usercomment = userin[9:] #remove /feedback and leave only the comment
 
                 #Link to spreadsheet on Google Docs using Google drive API
