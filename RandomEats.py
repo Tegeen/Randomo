@@ -10,10 +10,10 @@ from telepot.loop import MessageLoop
 from telepot.delegate import per_chat_id, create_open, pave_event_space
 from telepot.namedtuple import ReplyKeyboardMarkup, KeyboardButton
 
-#Possible development
-#For Google Dirve API linking to Google Sheetes
-#import gspread
-#from oauth2client.service_account import ServiceAccountCredentials
+
+For Google Dirve API linking to Google Sheetes
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
 global coordinates
 
@@ -132,30 +132,25 @@ class User(telepot.helper.ChatHandler):
             #feedback
 
             elif userin == '/feedback':
-                self.sender.sendMessage('To partipate in our user testing, please click on this link: https://docs.google.com/forms/d/e/1FAIpQLSc1JWS2EZI7Gv0yKgnOjFO9TlyOcW4jeCouQhIMH3PtzVFk0w/viewform')
-            
-	    #Possible development
-	    #elif ("/feedback") in userin:
-                #usercomment = userin[9:] #remove /feedback and leave only the comment
+                self.sender.sendMessage('To leave a comment, type /feedback {comment} \n\nTo partipate in our user testing, please click on this link: https://docs.google.com/forms/d/e/1FAIpQLSc1JWS2EZI7Gv0yKgnOjFO9TlyOcW4jeCouQhIMH3PtzVFk0w/viewform')
+            	self.close()
+
+	    elif ("/feedback") in userin:
+                usercomment = userin[9:] #remove /feedback and leave only the comment
 
                 #Link to spreadsheet on Google Docs using Google drive API
                 # use creds to create a client to interact with the Google Drive API
-                #scope = ['https://spreadsheets.google.com/feeds']
-                #creds = ServiceAccountCredentials.from_json_keyfile_name("keyfile.json", scope)
-                #client = gspread.authorize(creds)
+                scope = ['https://spreadsheets.google.com/feeds']
+                creds = ServiceAccountCredentials.from_json_keyfile_name("keyfile.json", scope)
+                client = gspread.authorize(creds)
  
                 # Find a workbook by name and add row to exiting rows
-                #sheet = client.open("RandomEatsFeedback").sheet1
-                #nowDT = datetime.datetime.now() #get current date and time
-                #row = [str(nowDT),usercomment] #[time, comment] will be added
-                #index = int(sheet.row_count)+1
-                #sheet.insert_row(row, index)
+                sheet = client.open("RandomEatsFeedback").sheet1
+                nowDT = datetime.datetime.now() #get current date and time
+                row = [str(nowDT),usercomment] #[time, comment] will be added
+                index = int(sheet.row_count)+1
+                sheet.insert_row(row, index)
                 
-                #self.close()
-
-            #Input error handling
-            else:
-                self.sender.sendMessage('Invalid reply.')
                 self.close()
 
         #get location and find nearby eateries!
