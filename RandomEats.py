@@ -10,12 +10,12 @@ from telepot.loop import MessageLoop
 from telepot.delegate import per_chat_id, create_open, pave_event_space
 from telepot.namedtuple import ReplyKeyboardMarkup, KeyboardButton
 
-
 #For Google Dirve API linking to Google Sheetes
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
-global coordinates
+global coordinates #user coordinates
+global numofeats #numberofeateriesleft
 
 class User(telepot.helper.ChatHandler):
     def __init__(self, *args, **kwargs):
@@ -59,7 +59,6 @@ class User(telepot.helper.ChatHandler):
         #Get JSON file from API for information on eateries
         res_json = requests.get(fullurl).json()
         resjson = res_json["results"]
-        print("marker here")
         returnedinfo =""
         for item in resjson:
             #information to get from JSON file
@@ -86,17 +85,35 @@ class User(telepot.helper.ChatHandler):
         self.close()
 
 #-----------(2)-generate random eatery----------------#
-    def _randeat(self,coordinates):
-        alleateries = self.geteaterydata(coordinates) #refer to above geteaterydata()
-        listdetails = alleateries.split('\n')  #split into list       
-        numoeats = (len(listdetails)-1)/5
-        print (numoeats)
-        randomeat = int(random.randint(0,numoeats))*5 #select random eatery "Name" line
-        randeatery = "\n".join(listdetails[randomeat:randomeat+5])
-        self.sender.sendMessage(randeatery) 
-        self.sender.sendMessage('Is this eatery OK?\n/ok or /notok ?')
+    def _randeat(self,coordinates,firsttime,untilempty):
+
+        #no eatery data acquired and sorted yet
+        if firsttime == True:
+            global alleateries
+            alleateries = self.geteaterydata(coordinates) #refer to above geteaterydata()
+            
+        if untilempty == False:
+            listdetails = alleateries.split('\n')  #split into list
+            listdetails[:-1]#remove extra \n at back of list
+            numoeats = (len(listdetails)-1)/5
+            randomeat = int(random.randint(0,numoeats-1))*5 #select random eatery "Name" line
+            randeatery = "\n".join(listdetails[randomeat:randomeat+5])
+            self.sender.sendMessage(randeatery) 
+
+            #remove eatery that has been printed
+            randeatery += "\n"
+
+            alleateries = alleateries.replace(randeatery,'')
+            print ('List of eateries left:', type(alleateries))
+            numoeats=numoeats-1 #remove one eatery from list of acquired eateries
+            self.sender.sendMessage('Is this eatery OK?\n/ok or /notok?\n If no, there are %d eater(y/ies) left' % numoeats)
+            if numoeats == 0:
+                return True;
+            elif numoeats > 0:
+                return False;
     
 #------------possible inputs form user----------------#
+            
     def on_chat_message(self, msg):
         #get data from user input for telegram msg fields
         content_type, chat_type, chat_id = telepot.glance(msg)
@@ -104,11 +121,11 @@ class User(telepot.helper.ChatHandler):
         #ensure data sent are not stickers, pictures, documents etc
 
         #get text
-        if content_type == 'text': 
+        if content_type == 'text' and msg['text'] != '/notok': 
             userin = msg['text']
             global num
 
-            #
+            #list all eateries
             if userin == '/listeateries':
                 num=1 #indicate to function to generate list
                 self.getlocation() #get location then go to elif content_type == 'location' below
@@ -117,23 +134,17 @@ class User(telepot.helper.ChatHandler):
             #generate a random eatery
             elif userin == '/randomeatery':
                 num=2 #indicate to function to generate only 1
-                self.getlocation() #get location then go to elif content_type == 'location' below
+                self.getlocation() #get location then go to ielif content_type == 'location' below
 
             # check if the user is agreeable with generated eatery
-            elif userin == '/ok' and num == 2:
+            elif userin == '/ok':
                 self.sender.sendMessage('Enjoy your meal!')
-                num=0 #inform bot that no longer checking for agreeability
-                self.close()
-            elif userin == '/notok' and num == 2:
-                self.sender.sendMessage('Please generate another eatery!')
                 num=0 #inform bot that no longer checking for agreeability
                 self.close()
 
             #feedback
-
             elif userin == '/feedback':
-                self.sender.sendMessage('To leave a comment, type /feedback {comment} \n\nTo partipate in our user testing, please click on this link: https://docs.google.com/forms/d/e/1FAIpQLSc1JWS2EZI7Gv0yKgnOjFO9TlyOcW4jeCouQhIMH3PtzVFk0w/viewform')
-
+                self.sender.sendMessage('To leave us a comment, \ntype /feedback -your comment-\n\nTo partipate in our user testing, please click on this link: https://docs.google.com/forms/d/e/1FAIpQLSc1JWS2EZI7Gv0yKgnOjFO9TlyOcW4jeCouQhIMH3PtzVFk0w/viewform')
             elif ("/feedback") in userin:
                 usercomment = userin[9:] #remove /feedback and leave only the comment
 
@@ -152,6 +163,11 @@ class User(telepot.helper.ChatHandler):
                 
                 self.close()
 
+            #Input error handling
+            else:
+                self.sender.sendMessage('Invalid reply.')
+                self.close()
+
         #get location and find nearby eateries!
         elif content_type == 'location':
             location = msg['location']
@@ -159,17 +175,30 @@ class User(telepot.helper.ChatHandler):
             #replace unneeded part of string to leave only coordinates
             a = lrepr.replace("{'latitude': ", "")
             b = a.replace(" 'longitude': ", "")
+            global coordinates
             coordinates = b.replace("}", "")
-            print(coordinates)
             if num == 1: #generate list
                 eateries = self._alleat(coordinates)
+                num = 0
             elif num == 2: #generate one eatery only
-               eateries = self._randeat(coordinates)
-            
+                firsttime = True #first time getting list of eateries nearby
+                untilempty = False #there are still nearby eateries that have no been listed
+                extracontainer = self._randeat(coordinates,firsttime,untilempty)
+                
+        elif content_type == 'text' and msg['text'] == '/notok' and num == 2:
+            userin = msg['text']
+            self.sender.sendMessage('Generating another eatery...')
+            #Run self._randeat while telling function that it is not the first time running and there are still eateries to display
+            untilempty2 = self._randeat(coordinates,False,False)
+            if untilempty2 == True:
+                num = 0
+                self.sender.sendMessage('There are no more eateries left! \nT.T')
+                self.close()
+   
             
         #invalid input handling
         else:
-            self.sender.sendMessage('Please input only plain text')
+            self.sender.sendMessage('Please input either the commands available for you or other plain text')
             self.close()
 
 #------------------timeout----------------------------#
